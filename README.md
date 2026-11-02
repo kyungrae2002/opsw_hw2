@@ -36,7 +36,6 @@ GPU 없이 일반 CPU에서 **ONNX Runtime**으로 동작하며, `main` 브랜�
 ├── tests/test_api.py         # API 테스트
 ├── .github/workflows/ci.yml  # CI 파이프라인
 ├── Dockerfile
-├── render.yaml               # Render 배포 설정 (Blueprint)
 ├── requirements.txt
 └── requirements-dev.txt
 ```
