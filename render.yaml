@@ -1,0 +1,13 @@
+# Render Blueprint: main 브랜치에 push → GitHub Actions CI 통과 → 자동 재배포
+services:
+  - type: web
+    name: snaplabel
+    runtime: docker
+    plan: free
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: ORT_THREADS
+        value: "1"

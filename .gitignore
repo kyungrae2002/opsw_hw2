@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+
+# 대용량 모델 파일 (scripts/download_model.py로 내려받음)
+models/
+*.onnx
+*.part
+
+# 실행 중 생성 파일 / 로그 / 테스트 이미지
+*.log
+uploads/
+samples/
+
+# 인증정보
+.env
+.env.*
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

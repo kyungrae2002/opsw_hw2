@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SnapLabel · 사진 속 사물 인식</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <p class="eyebrow">MobileNetV2 · ONNX Runtime · CPU</p>
+      <h1>SnapLabel</h1>
+      <p class="lead">사진을 올리면 사진 속 사물이 무엇인지 AI가 추정해 줍니다.</p>
+    </header>
+
+    <section class="card">
+      <label id="dropzone" class="dropzone" for="file">
+        <input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/bmp,image/gif" />
+        <span class="plus">+</span>
+        <strong>이미지를 선택하거나 여기로 끌어다 놓으세요</strong>
+        <small>JPG · PNG · WEBP · BMP · GIF, 최대 5MB</small>
+      </label>
+
+      <figure id="preview" class="preview" hidden>
+        <img id="previewImg" alt="업로드한 이미지 미리보기" />
+        <figcaption id="previewName"></figcaption>
+      </figure>
+
+      <button id="analyze" class="btn" disabled>분석하기</button>
+      <p id="status" class="status" role="status"></p>
+    </section>
+
+    <section id="result" class="card" hidden>
+      <div class="result-head">
+        <h2>추정 결과</h2>
+        <span id="meta" class="meta"></span>
+      </div>
+      <ol id="predictions" class="predictions"></ol>
+      <p class="notice" id="notice"></p>
+    </section>
+
+    <footer>
+      <span id="deploy">버전 확인 중…</span>
+    </footer>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
