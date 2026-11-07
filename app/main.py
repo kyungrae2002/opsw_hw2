@@ -13,7 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.model import Classifier, InvalidImageError
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "1.1.0"
 MAX_UPLOAD_BYTES = 5 * 1024 * 1024  # 5MB
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/bmp", "image/gif"}
 STATIC_DIR = Path(__file__).resolve().parent / "static"

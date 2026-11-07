@@ -109,7 +109,8 @@ jobs:
           build-args: GIT_COMMIT=${{ github.sha }}
           cache-from: type=gha
 
-  # 3) CD: 내 컴퓨터(self-hosted runner)에서 새 이미지를 받아 무중단(Blue-Green) 교체
+  # 3) CD: 내 컴퓨터(self-hosted runner)에서 새 이미지로 무중단(Blue-Green) 교체
+  #    독립 모니터가 배포 전·중·후(+30초) 동안 1초마다 실제 분석 API를 호출해 기록
   deploy:
     needs: docker
     if: github.event_name != 'pull_request'
@@ -119,6 +120,7 @@ jobs:
       cancel-in-progress: false
     env:
       DEPLOY_PORT: "8080"
+      SERVICE_URL: http://127.0.0.1:8080
     steps:
       - uses: actions/checkout@v4
 
@@ -128,10 +130,43 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Pull & replace app container (zero-downtime check)
+      - name: Start independent monitor (before deploy)
+        run: |
+          MON_DIR="$RUNNER_TEMP/zero-downtime-monitor"
+          rm -rf "$MON_DIR" && mkdir -p "$MON_DIR"
+          echo "MON_DIR=$MON_DIR" >> "$GITHUB_ENV"
+          nohup python3 deploy/monitor.py run --url "$SERVICE_URL" \
+            --image deploy/test-image.png --out "$MON_DIR" \
+            --interval 1 --post-seconds 30 > "$MON_DIR/monitor.stdout" 2>&1 &
+          echo "모니터 PID: $!"
+          python3 deploy/monitor.py wait-ready --out "$MON_DIR" --timeout 60
+
+      - name: Pull new image & replace container (blue-green)
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
         run: |
-          SHORT_SHA="${GITHUB_SHA:0:7}"
-          IMAGE="$DOCKERHUB_USERNAME/${IMAGE_NAME}:sha-$SHORT_SHA"
-          bash deploy/verify_zero_downtime.sh "$IMAGE" "$SHORT_SHA"
+          IMAGE="$DOCKERHUB_USERNAME/${IMAGE_NAME}:sha-${GITHUB_SHA:0:7}"
+          python3 deploy/monitor.py mark --out "$MON_DIR" deploy_start
+          rc=0
+          bash deploy/deploy.sh "$IMAGE" || rc=$?
+          python3 deploy/monitor.py mark --out "$MON_DIR" deploy_end --result "$rc"
+          exit $rc
+
+      - name: Keep monitoring 30s after deploy & write summary
+        if: always()
+        run: python3 deploy/monitor.py report --out "$MON_DIR" --expected-commit "${GITHUB_SHA:0:7}"
+
+      - name: Verify deployed container (model & web)
+        run: |
+          curl -fsS "$SERVICE_URL/api/health" | tee /dev/stderr | grep -q '"loaded":true'
+          curl -fsS -o /dev/null "$SERVICE_URL/"
+          curl -fsS -o /dev/null "$SERVICE_URL/docs"
+          docker ps --filter name=snaplabel --format '{{.Names}}  {{.Image}}  {{.Status}}'
+
+      - name: Upload monitor logs (UTF-8)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zero-downtime-monitor
+          path: ${{ env.MON_DIR }}
+          if-no-files-found: warn

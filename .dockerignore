@@ -12,3 +12,6 @@ docs/
 actions-runner/
 _to_delete/
 screenshots/
+data/
+reports/
+deploy/

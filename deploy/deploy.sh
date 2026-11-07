@@ -13,9 +13,9 @@ set -euo pipefail
 
 IMAGE="${1:?사용법: deploy/deploy.sh <이미지:태그>}"
 PORT="${DEPLOY_PORT:-8080}"
-NET=snaplabel-net
-PROXY=snaplabel-proxy
-APP=snaplabel
+APP="${DEPLOY_NAME:-snaplabel}"   # 컨테이너 이름 접두사 (테스트 시 변경 가능)
+NET="$APP-net"
+PROXY="$APP-proxy"
 NGINX_IMAGE=nginx:1.27.5-alpine
 
 log() { echo "[deploy $(date +%H:%M:%S)] $*"; }
