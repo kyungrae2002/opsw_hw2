@@ -90,4 +90,5 @@ async def predict(file: UploadFile = File(...)) -> dict:
         "inference_ms": elapsed_ms,
         "predictions": predictions,
         "notice": "결과는 ImageNet 1000개 클래스 기준 모델의 추정치이며 정확하지 않을 수 있습니다.",
+        **deploy_info(),  # 응답한 서버의 버전·커밋 (무중단 배포 검증용)
     }

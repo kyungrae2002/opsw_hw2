@@ -93,13 +93,45 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # 로컬(Apple Silicon Mac) 배포를 위해 amd64 + arm64 이미지를 함께 빌드
+      - uses: docker/setup-qemu-action@v3
+        if: github.event_name != 'pull_request'
+
       - name: Build & push to Docker Hub
         if: github.event_name != 'pull_request'
         uses: docker/build-push-action@v6
         with:
           context: .
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: GIT_COMMIT=${{ github.sha }}
           cache-from: type=gha
+
+  # 3) CD: 내 컴퓨터(self-hosted runner)에서 새 이미지를 받아 무중단(Blue-Green) 교체
+  deploy:
+    needs: docker
+    if: github.event_name != 'pull_request'
+    runs-on: self-hosted
+    concurrency:
+      group: local-deploy
+      cancel-in-progress: false
+    env:
+      DEPLOY_PORT: "8080"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull & replace app container (zero-downtime check)
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA:0:7}"
+          IMAGE="$DOCKERHUB_USERNAME/${IMAGE_NAME}:sha-$SHORT_SHA"
+          bash deploy/verify_zero_downtime.sh "$IMAGE" "$SHORT_SHA"

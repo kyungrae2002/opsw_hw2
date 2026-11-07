@@ -25,3 +25,6 @@ samples/
 .idea/
 .DS_Store
 Thumbs.db
+
+# GitHub self-hosted runner (로컬 설치 폴더)
+actions-runner/

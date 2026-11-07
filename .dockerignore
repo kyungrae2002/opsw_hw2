@@ -9,3 +9,6 @@ models/
 tests/
 docs/
 *.md
+actions-runner/
+_to_delete/
+screenshots/
